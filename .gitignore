@@ -1,0 +1,8 @@
+.vscode/
+__pycache__/
+*.pyc
+
+
+test/
+images/
+models/
