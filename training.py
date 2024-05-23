@@ -15,7 +15,7 @@ import numpy as np
 # global variables
 DATA_ROOT = "../_DatasetsLocal/CompoundEyeClassification/Data"
 MODEL_PATH = "../_ModelsLocal/resnet-50"
-SAVE_WEIGHTS = "./best_model.pth"
+SAVE_WEIGHTS = "./models/best_model.pth"
 IMG_PATH = "./images/"
 CONTINUE_TRAINING = True
 LEARNING_RATE = 1e-4
@@ -236,7 +236,10 @@ def evaluate_model_with_fog_density(model, test_loader):
         for k in density_correct.keys()
     }
     for k in sorted(density_accuracies.keys()):
-        print(f"Fog Density {k}: {density_accuracies[k]:.4f}")
+        print(
+            f"Fog Density {k}: {density_accuracies[k]:.4f}",
+            f"({density_correct[k]}/{density_total[k]})",
+        )
 
     # Plot fog density accuracy
     plt.figure(figsize=(10, 5))
