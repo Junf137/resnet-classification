@@ -2,6 +2,8 @@ import torch
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+from partition import indices_in_dataset_and_subset
+
 
 # Updated Plotting function for loss and accuracy per epoch
 def plot_epoch_loss(epoch, batch_losses, save_img_path):
@@ -144,10 +146,10 @@ def evaluate_model_with_fog_density(
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-            # TODO: Dataset and Subset behave differently
-            for idx, pred, label in zip(test_loader.dataset.indices, predicted, labels):
+            indices = indices_in_dataset_and_subset(test_loader.dataset)
+            for idx, pred, label in zip(indices, predicted, labels):
                 density_index = min(
-                    idx * dens_level // max(test_loader.dataset.indices), dens_level - 1
+                    idx * dens_level // max(indices), dens_level - 1
                 )
                 density_total[density_index] += 1
                 density_correct[density_index] += 1 if pred == label else 0

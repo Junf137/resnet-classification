@@ -136,6 +136,14 @@ def targets_in_dataset_and_subset(dataset):
         return ori_targets[dataset.indices]
 
 
+def indices_in_dataset_and_subset(dataset):
+    if isinstance(dataset, ImageFolder):
+        return list(range(len(dataset)))
+    elif isinstance(dataset, Subset):
+        ori_indices = np.array(indices_in_dataset_and_subset(dataset.dataset))
+        return ori_indices[dataset.indices]
+
+
 def get_dataloader(
     base_folder: str,
     ver: int,
