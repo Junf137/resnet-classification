@@ -128,13 +128,12 @@ def get_datasets_ver2(base_folder, transform):
     return train_dataset, val_dataset, test_dataset
 
 
-# TODO: Dataset and Subset behave differently
-def get_counter_from_subset(subset: Subset) -> Counter:
-
-    targets = np.array(subset.dataset.targets)
-    indices = np.array(subset.indices)
-
-    return Counter(targets[indices])
+def targets_in_dataset_and_subset(dataset):
+    if isinstance(dataset, ImageFolder):
+        return dataset.targets
+    elif isinstance(dataset, Subset):
+        ori_targets = np.array(targets_in_dataset_and_subset(dataset.dataset))
+        return ori_targets[dataset.indices]
 
 
 def get_dataloader(
@@ -160,12 +159,14 @@ def get_dataloader(
     # Calculate the number of examples for each class
     print(f"Dataset Split:")
     print(
-        f"Training size: {len(train_dataset)}, {get_counter_from_subset(train_dataset)}"
+        f"Training size: {len(train_dataset)}, {Counter(targets_in_dataset_and_subset(train_dataset))}"
     )
     print(
-        f"Validation size: {len(val_dataset)}, {get_counter_from_subset(val_dataset)}"
+        f"Validation size: {len(val_dataset)}, {Counter(targets_in_dataset_and_subset(val_dataset))}"
     )
-    print(f"Testing size: {len(test_dataset)}, {get_counter_from_subset(test_dataset)}")
+    print(
+        f"Testing size: {len(test_dataset)}, {Counter(targets_in_dataset_and_subset(test_dataset))}"
+    )
 
     # Create data loaders for train, validation, and test sets
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
