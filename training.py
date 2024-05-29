@@ -1,126 +1,10 @@
-import os
 import torch
-import torch.optim as optim
-import torch.nn as nn
-from torchvision.datasets import ImageFolder
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader, random_split, Subset
-from transformers import ResNetForImageClassification
 from tqdm import tqdm
-import random
-from collections import Counter
 import matplotlib.pyplot as plt
-import numpy as np
-
-# global variables
-DATA_ROOT = "../_DatasetsLocal/CompoundEyeClassification/Data"
-MODEL_PATH = "../_ModelsLocal/resnet-50"
-SAVE_WEIGHTS = "./models/best_model.pth"
-IMG_PATH = "./images/"
-CONTINUE_TRAINING = True
-LEARNING_RATE = 1e-4
-BATCH_SIZE = 32
-NUM_CLASSES = 3
-DENS_LEVEL = 10
-TRAINING_PORTION = 0.8
-VALIDATION_PORTION = 0.1
-EPOCHS = 2
-
-# debug settings
-FAST_DEBUG = False
-
-# 1. Create datasets & Data preprocessing
-# Define data transformations
-transform = transforms.Compose(
-    [
-        transforms.Resize((224, 224)),  # Resize images to match ResNet50 input size
-        transforms.ToTensor(),  # Convert images to tensors
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-        ),  # Normalize image pixels
-    ]
-)
-
-# Create ImageFolder dataset
-dataset = ImageFolder(root=DATA_ROOT, transform=transform)
-print(
-    f"Original dataset size: {len(dataset)}, \tClass distribution: {Counter(dataset.targets)}"
-)
-
-
-# Function to balance the dataset
-def balance_dataset(dataset):
-    targets = dataset.targets
-    class_indices = {target: [] for target in set(targets)}
-    for idx, target in enumerate(targets):
-        class_indices[target].append(idx)
-
-    min_class_size = min(len(indices) for indices in class_indices.values())
-    min_class_size = 100 if FAST_DEBUG else min_class_size
-
-    balanced_indices = []
-    for indices in class_indices.values():
-        balanced_indices.extend(random.sample(indices, min_class_size))
-
-    return balanced_indices
-
-
-# Get balanced indices
-balanced_indices = balance_dataset(dataset)
-
-# Create a balanced subset of the dataset
-balanced_dataset = Subset(dataset, balanced_indices)
-# print(
-#     f"Balanced dataset size: {len(balanced_dataset)}, \tClass distribution: {Counter(balanced_dataset.targets)}"
-# )
-
-
-# Define sizes for train, validation, and test sets
-train_size = int(TRAINING_PORTION * len(balanced_dataset))
-val_size = int(VALIDATION_PORTION * len(balanced_dataset))
-test_size = len(balanced_dataset) - train_size - val_size
-
-# Randomly split the balanced dataset into train, validation, and test sets
-train_dataset, val_dataset, test_dataset = random_split(
-    balanced_dataset, [train_size, val_size, test_size]
-)
-
-print(f"Dataset Split:")
-print(f"\tTraining size: {len(train_dataset)}")
-print(f"\tValidation size: {len(val_dataset)}")
-print(f"\tTesting size: {len(test_dataset)}")
-
-# Create data loaders for train, validation, and test sets
-train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
-test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
-
-# 2. Load pre-trained model and adjust the classification head
-model = ResNetForImageClassification.from_pretrained(
-    MODEL_PATH, ignore_mismatched_sizes=True, num_labels=NUM_CLASSES
-)
-
-# Load the model weights
-if CONTINUE_TRAINING and os.path.exists(SAVE_WEIGHTS):
-    model.load_state_dict(torch.load(SAVE_WEIGHTS))
-
-
-# Move model to GPU if available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-
-# Define optimizer and loss function
-optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
-criterion = nn.CrossEntropyLoss()
-
-# Initialize lists to store training and validation loss
-train_losses = []
-val_losses = []
-val_accuracies = []
 
 
 # Updated Plotting function for loss and accuracy per epoch
-def plot_epoch_loss(epoch, batch_losses):
+def plot_epoch_loss(epoch, batch_losses, save_img_path):
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, len(batch_losses) + 1), batch_losses, "b", label="Batch loss")
     plt.title(f"Training loss in Epoch {epoch+1}")
@@ -128,12 +12,53 @@ def plot_epoch_loss(epoch, batch_losses):
     plt.ylabel("Loss")
     plt.legend()
     plt.grid(True)
-    plt.savefig(IMG_PATH + f"epoch_{epoch+1}_loss.png")  # Save plot as an image
+    plt.savefig(save_img_path + f"epoch_{epoch+1}_loss.png")  # Save plot as an image
+    plt.close()
+
+
+# Updated Plotting function for loss and accuracy
+def plot_metrics(train_losses, val_losses, val_accuracies, save_img_path):
+    epochs = range(1, len(train_losses) + 1)
+    plt.figure(figsize=(12, 4))
+
+    # Plot training and validation loss
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, train_losses, "b", label="Training loss")
+    plt.plot(epochs, val_losses, "r", label="Validation loss")
+    plt.title("Training and validation loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend()
+
+    # Plot validation accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, val_accuracies, "g", label="Validation accuracy")
+    plt.title("Validation accuracy")
+    plt.xlabel("Epochs")
+    plt.ylabel("Accuracy")
+    plt.legend()
+
+    # Save the plot
+    plt.tight_layout()
+    plt.savefig(save_img_path + "metrics.png")
     plt.close()
 
 
 # Training function
-def train_model(model, train_loader, val_loader, optimizer, criterion, num_epochs=10):
+def train_model(
+    model,
+    train_loader,
+    val_loader,
+    optimizer,
+    train_losses,
+    val_losses,
+    val_accuracies,
+    criterion,
+    device,
+    num_epochs,
+    save_weights,
+    save_img_path,
+):
     best_val_accuracy = 0.0
     for epoch in range(num_epochs):
         model.train()
@@ -166,7 +91,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
         train_losses.append(train_loss)
 
         # Plot and save batch losses for the current epoch
-        plot_epoch_loss(epoch, batch_losses)
+        plot_epoch_loss(epoch=epoch, batch_losses=batch_losses, save_img_path=save_img_path)
 
         # Evaluate the model on validation set
         model.eval()
@@ -198,14 +123,13 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
         # Save the best model
         if val_accuracy > best_val_accuracy:
             best_val_accuracy = val_accuracy
-            torch.save(model.state_dict(), SAVE_WEIGHTS)
+            torch.save(model.state_dict(), save_weights)
 
 
 # Evaluation function with fog density analysis
-def evaluate_model_with_fog_density(model, test_loader):
-    # test accuracy plot grid
-    dens_level = DENS_LEVEL
-
+def evaluate_model_with_fog_density(
+    model, test_loader, device, dens_level, save_img_path
+):
     model.eval()
     correct = 0
     total = 0
@@ -220,6 +144,7 @@ def evaluate_model_with_fog_density(model, test_loader):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
+            # TODO: Dataset and Subset behave differently
             for idx, pred, label in zip(test_loader.dataset.indices, predicted, labels):
                 density_index = min(
                     idx * dens_level // max(test_loader.dataset.indices), dens_level - 1
@@ -252,44 +177,5 @@ def evaluate_model_with_fog_density(model, test_loader):
     plt.grid(True)
 
     # Save the plot
-    plt.savefig(IMG_PATH + "fog_density_accuracy.png")
+    plt.savefig(save_img_path + "fog_density_accuracy.png")
     plt.close()
-
-
-# Updated Plotting function for loss and accuracy
-def plot_metrics(train_losses, val_losses, val_accuracies):
-    epochs = range(1, len(train_losses) + 1)
-    plt.figure(figsize=(12, 4))
-
-    # Plot training and validation loss
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs, train_losses, "b", label="Training loss")
-    plt.plot(epochs, val_losses, "r", label="Validation loss")
-    plt.title("Training and validation loss")
-    plt.xlabel("Epochs")
-    plt.ylabel("Loss")
-    plt.legend()
-
-    # Plot validation accuracy
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs, val_accuracies, "g", label="Validation accuracy")
-    plt.title("Validation accuracy")
-    plt.xlabel("Epochs")
-    plt.ylabel("Accuracy")
-    plt.legend()
-
-    # Save the plot
-    plt.tight_layout()
-    plt.savefig(IMG_PATH + "metrics.png")
-    plt.close()
-
-
-# 3. Train the model
-train_model(model, train_loader, val_loader, optimizer, criterion, num_epochs=EPOCHS)
-
-# 4. Plot the metrics
-plot_metrics(train_losses, val_losses, val_accuracies)
-
-# 5. Evaluate the model on the test set with fog density analysis
-model.load_state_dict(torch.load(SAVE_WEIGHTS))
-evaluate_model_with_fog_density(model, test_loader)
