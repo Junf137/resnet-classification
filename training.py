@@ -139,7 +139,8 @@ def evaluate_model_with_fog_density(
     density_total = {i: 0 for i in range(0, dens_level)}
 
     with torch.no_grad():
-        for inputs, labels in test_loader:
+        test_loop = tqdm(test_loader, total=len(test_loader), leave=True)  # Initialize tqdm
+        for inputs, labels in test_loop:  # Replace test_loader with test_loop
             inputs, labels = inputs.to(device), labels.to(device)  # Move to GPU
             outputs = model(inputs)
             _, predicted = torch.max(outputs.logits, 1)
@@ -153,6 +154,10 @@ def evaluate_model_with_fog_density(
                 )
                 density_total[density_index] += 1
                 density_correct[density_index] += 1 if pred == label else 0
+
+            # Update the progress bar
+            test_loop.set_description("Evaluating")
+            test_loop.set_postfix(test_accuracy=correct / total)
 
     test_accuracy = correct / total
     print(f"Test Accuracy: {test_accuracy:.4f}")
