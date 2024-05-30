@@ -19,6 +19,20 @@ FAST_DEBUG = False
 LOAD_INDICES = True
 
 
+# Function to create a validator function with additional arguments
+def create_image_file_validator(valid_extensions):
+    def is_valid_image_file(filepath):
+        return any(filepath.lower().endswith(ext) for ext in valid_extensions)
+
+    return is_valid_image_file
+
+
+# Specify valid extensions
+valid_extensions = [".jpg", ".jpeg", ".png"]
+# Create the validator function
+is_valid_image_file = create_image_file_validator(valid_extensions)
+
+
 # Version 1
 # Function to balance the dataset
 def balance_dataset(dataset):
