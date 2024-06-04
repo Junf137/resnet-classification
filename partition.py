@@ -44,14 +44,10 @@ def get_datasets_ver1(base_folder, train_portion, val_portion, transform):
     #     f"Balanced dataset size: {len(balanced_dataset)}, \tClass distribution: {Counter(balanced_dataset.targets)}"
     # )
 
-    # Define sizes for train, validation, and test sets
-    train_size = int(train_portion * len(balanced_dataset))
-    val_size = int(val_portion * len(balanced_dataset))
-    test_size = len(balanced_dataset) - train_size - val_size
-
     # Randomly split the balanced dataset into train, validation, and test sets
     train_dataset, val_dataset, test_dataset = random_split(
-        balanced_dataset, [train_size, val_size, test_size]
+        balanced_dataset,
+        [train_portion, val_portion, 1.0 - train_portion - val_portion],
     )
 
     return train_dataset, val_dataset, test_dataset
