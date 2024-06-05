@@ -9,6 +9,8 @@ import re
 import os
 import json
 
+from CustomImageFolder import CustomImageFolder
+
 from config import (
     LABELS_FOLDER_NUM,
     LABELS_DIRS_INDEX,
@@ -135,7 +137,7 @@ def get_dataloader(
     transform: transforms.Compose,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
 
-    dataset = ImageFolder(root=base_folder, transform=transform)
+    dataset = CustomImageFolder(root=base_folder, transform=transform)
 
     # Save indices as JSON files
     train_indices_path = "./models/train_indices_ver_" + str(ver) + ".json"
