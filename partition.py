@@ -166,6 +166,10 @@ def get_dataloader(
             json.dump(test_indices, f)
 
     if FAST_DEBUG:
+        random.shuffle(train_indices)
+        random.shuffle(val_indices)
+        random.shuffle(test_indices)
+
         train_indices = train_indices[:10]
         val_indices = val_indices[:10]
         test_indices = test_indices[:10]
