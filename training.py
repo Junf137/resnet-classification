@@ -2,8 +2,6 @@ import torch
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from partition import indices_in_dataset_and_subset
-
 from config import FAST_DEBUG, IMG_PATH, SAVE_WEIGHTS
 
 
@@ -69,7 +67,7 @@ def train_model(
         train_total = 0
         batch_losses = []  # List to store batch losses
         train_loop = tqdm(train_loader, total=len(train_loader), leave=True)
-        for inputs, labels in train_loop:
+        for _, _, inputs, labels in train_loop:
             inputs, labels = inputs.to(device), labels.to(device)  # Move to GPU
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -102,7 +100,7 @@ def train_model(
         total = 0
         with torch.no_grad():
             val_loop = tqdm(val_loader, total=len(val_loader), leave=True)
-            for inputs, labels in val_loop:
+            for _, _, inputs, labels in val_loop:
                 inputs, labels = inputs.to(device), labels.to(device)  # Move to GPU
                 outputs = model(inputs)
                 _, predicted = torch.max(outputs.logits, 1)
@@ -137,21 +135,23 @@ def evaluate_model_with_fog_density(model, test_loader, device, dens_level):
     density_total = {i: 0 for i in range(0, dens_level)}
 
     with torch.no_grad():
-        test_loop = tqdm(test_loader, total=len(test_loader), leave=True)  # Initialize tqdm
-        for inputs, labels in test_loop:  # Replace test_loader with test_loop
+        # Initialize tqdm
+        test_loop = tqdm(test_loader, total=len(test_loader), leave=True)
+        for _, fog_lvs, inputs, labels in test_loop:
             inputs, labels = inputs.to(device), labels.to(device)  # Move to GPU
             outputs = model(inputs)
             _, predicted = torch.max(outputs.logits, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-            indices = indices_in_dataset_and_subset(test_loader.dataset)
-            for idx, pred, label in zip(indices, predicted, labels):
+            max_fog_lv = test_loader.dataset.dataset.max_fog_lv
+            for fog_lv, pred, label in zip(fog_lvs, predicted, labels):
                 density_index = min(
-                    idx * dens_level // max(indices), dens_level - 1
+                    fog_lv * dens_level // max_fog_lv,
+                    dens_level - 1,
                 )
-                density_total[density_index] += 1
-                density_correct[density_index] += 1 if pred == label else 0
+                density_total[density_index.item()] += 1
+                density_correct[density_index.item()] += 1 if pred == label else 0
 
             # Update the progress bar
             test_loop.set_description("Evaluating")
