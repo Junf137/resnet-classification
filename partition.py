@@ -9,14 +9,13 @@ import re
 import os
 import json
 
-LABELS_FOLDER_NUM = {"E": 8, "I": 4, "O": 4}
-LABELS_DIRS_INDEX = {"E": [], "I": [], "O": []}
-
-VALID_EXTENSIONS = {".png", ".jpg"}
-
-FAST_DEBUG = False
-
-LOAD_INDICES = True
+from config import (
+    LABELS_FOLDER_NUM,
+    LABELS_DIRS_INDEX,
+    VALID_EXTENSIONS,
+    FAST_DEBUG,
+    LOAD_INDICES,
+)
 
 
 # Version 1

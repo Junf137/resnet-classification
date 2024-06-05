@@ -8,23 +8,21 @@ import torchvision.transforms as transforms
 from partition import get_dataloader
 from training import train_model, plot_metrics, evaluate_model_with_fog_density
 
-# global variables
-DENS_LEVEL = 10
-PARTITION_VERSION = 2  # 1 or 2
-
-BASE_FOLDER = "../_DatasetsLocal/CompoundEyeClassification/Data/"
-MODEL_PATH = "../_ModelsLocal/resnet-50"
-SAVE_WEIGHTS = "./models/best_model_ver_" + str(PARTITION_VERSION) + ".pth"
-IMG_PATH = "./images/ver_" + str(PARTITION_VERSION) + "/"
-CONTINUE_TRAINING = True
-
-LEARNING_RATE = 1e-4
-BATCH_SIZE = 32
-NUM_CLASSES = 3
-TRAINING_PORTION = 0.8
-VALIDATION_PORTION = 0.1
-EPOCHS = 2
-
+from config import (
+    BASE_FOLDER,
+    PARTITION_VERSION,
+    MODEL_PATH,
+    SAVE_WEIGHTS,
+    IMG_PATH,
+    CONTINUE_TRAINING,
+    LEARNING_RATE,
+    BATCH_SIZE,
+    NUM_CLASSES,
+    TRAINING_PORTION,
+    VALIDATION_PORTION,
+    EPOCHS,
+    DENS_LEVEL,
+)
 
 # Define data transformations
 transform = transforms.Compose(
