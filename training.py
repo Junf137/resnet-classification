@@ -122,8 +122,8 @@ def train_model(
             f"Epoch {epoch + 1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Acc: {train_accuracy:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_accuracy:.4f}"
         )
 
-        # Save the best model
-        if val_accuracy > best_val_accuracy:
+        # Save the best model (when not in FAST_DEBUG mode)
+        if (val_accuracy > best_val_accuracy) and (not FAST_DEBUG):
             best_val_accuracy = val_accuracy
             torch.save(model.state_dict(), SAVE_WEIGHTS)
 
