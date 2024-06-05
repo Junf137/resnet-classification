@@ -13,7 +13,6 @@ from config import (
     PARTITION_VERSION,
     MODEL_PATH,
     SAVE_WEIGHTS,
-    IMG_PATH,
     CONTINUE_TRAINING,
     LEARNING_RATE,
     BATCH_SIZE,
@@ -83,8 +82,6 @@ train_model(
     criterion=criterion,
     device=device,
     num_epochs=EPOCHS,
-    save_weights=SAVE_WEIGHTS,
-    save_img_path=IMG_PATH,
 )
 
 # 4. Plot the metrics
@@ -92,15 +89,13 @@ plot_metrics(
     train_losses=train_losses,
     val_losses=val_losses,
     val_accuracies=val_accuracies,
-    save_img_path=IMG_PATH,
 )
 
 # 5. Evaluate the model on the test set with fog density analysis
-model.load_state_dict(torch.load(SAVE_WEIGHTS))
+# Load the best model weights
+if os.path.exists(SAVE_WEIGHTS):
+    model.load_state_dict(torch.load(SAVE_WEIGHTS))
+
 evaluate_model_with_fog_density(
-    model=model,
-    test_loader=test_loader,
-    device=device,
-    dens_level=DENS_LEVEL,
-    save_img_path=IMG_PATH,
+    model=model, test_loader=test_loader, device=device, dens_level=DENS_LEVEL
 )

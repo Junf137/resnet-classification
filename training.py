@@ -4,9 +4,11 @@ import matplotlib.pyplot as plt
 
 from partition import indices_in_dataset_and_subset
 
+from config import FAST_DEBUG, IMG_PATH, SAVE_WEIGHTS
+
 
 # Updated Plotting function for loss and accuracy per epoch
-def plot_epoch_loss(epoch, batch_losses, save_img_path):
+def plot_epoch_loss(epoch, batch_losses):
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, len(batch_losses) + 1), batch_losses, "b", label="Batch loss")
     plt.title(f"Training loss in Epoch {epoch+1}")
@@ -14,12 +16,12 @@ def plot_epoch_loss(epoch, batch_losses, save_img_path):
     plt.ylabel("Loss")
     plt.legend()
     plt.grid(True)
-    plt.savefig(save_img_path + f"epoch_{epoch+1}_loss.png")  # Save plot as an image
+    plt.savefig(IMG_PATH + f"epoch_{epoch+1}_loss.png")  # Save plot as an image
     plt.close()
 
 
 # Updated Plotting function for loss and accuracy
-def plot_metrics(train_losses, val_losses, val_accuracies, save_img_path):
+def plot_metrics(train_losses, val_losses, val_accuracies):
     epochs = range(1, len(train_losses) + 1)
     plt.figure(figsize=(12, 4))
 
@@ -42,7 +44,7 @@ def plot_metrics(train_losses, val_losses, val_accuracies, save_img_path):
 
     # Save the plot
     plt.tight_layout()
-    plt.savefig(save_img_path + "metrics.png")
+    plt.savefig(IMG_PATH + "metrics.png")
     plt.close()
 
 
@@ -58,8 +60,6 @@ def train_model(
     criterion,
     device,
     num_epochs,
-    save_weights,
-    save_img_path,
 ):
     best_val_accuracy = 0.0
     for epoch in range(num_epochs):
@@ -93,7 +93,7 @@ def train_model(
         train_losses.append(train_loss)
 
         # Plot and save batch losses for the current epoch
-        plot_epoch_loss(epoch=epoch, batch_losses=batch_losses, save_img_path=save_img_path)
+        plot_epoch_loss(epoch=epoch, batch_losses=batch_losses)
 
         # Evaluate the model on validation set
         model.eval()
@@ -125,13 +125,11 @@ def train_model(
         # Save the best model
         if val_accuracy > best_val_accuracy:
             best_val_accuracy = val_accuracy
-            torch.save(model.state_dict(), save_weights)
+            torch.save(model.state_dict(), SAVE_WEIGHTS)
 
 
 # Evaluation function with fog density analysis
-def evaluate_model_with_fog_density(
-    model, test_loader, device, dens_level, save_img_path
-):
+def evaluate_model_with_fog_density(model, test_loader, device, dens_level):
     model.eval()
     correct = 0
     total = 0
@@ -184,5 +182,5 @@ def evaluate_model_with_fog_density(
     plt.grid(True)
 
     # Save the plot
-    plt.savefig(save_img_path + "fog_density_accuracy.png")
+    plt.savefig(IMG_PATH + "fog_density_accuracy.png")
     plt.close()
