@@ -3,16 +3,16 @@ DENS_LEVEL = 10
 PARTITION_VERSION = 2  # 1 or 2
 
 # paths
-BASE_FOLDER = "../_DatasetsLocal/CompoundEyeClassification/Data/"
+BASE_FOLDER = "../_DatasetsLocal/CompoundEyeClassification_5_class/"
 MODEL_PATH = "../_ModelsLocal/resnet-50"
 SAVE_WEIGHTS = "./models/best_model_ver_" + str(PARTITION_VERSION) + ".pth"
 IMG_PATH = "./images/ver_" + str(PARTITION_VERSION) + "/"
 VALID_EXTENSIONS = {".png", ".jpg"}
 
 # training parameters
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 1e-5
 BATCH_SIZE = 32
-NUM_CLASSES = 3
+NUM_CLASSES = 5
 TRAINING_PORTION = 0.8
 VALIDATION_PORTION = 0.1
 EPOCHS = 2
