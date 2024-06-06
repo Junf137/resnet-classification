@@ -14,7 +14,10 @@ def plot_epoch_loss(epoch, batch_losses):
     plt.ylabel("Loss")
     plt.legend()
     plt.grid(True)
-    plt.savefig(IMG_PATH + f"epoch_{epoch+1}_loss.png")  # Save plot as an image
+
+    if not FAST_DEBUG:
+        plt.savefig(IMG_PATH + f"epoch_{epoch+1}_loss.png")
+
     plt.close()
 
 
@@ -40,9 +43,11 @@ def plot_metrics(train_losses, val_losses, val_accuracies):
     plt.ylabel("Accuracy")
     plt.legend()
 
-    # Save the plot
     plt.tight_layout()
-    plt.savefig(IMG_PATH + "metrics.png")
+
+    if not FAST_DEBUG:
+        plt.savefig(IMG_PATH + "metrics.png")
+
     plt.close()
 
 
@@ -183,6 +188,7 @@ def evaluate_model_with_fog_density(model, test_loader, device, dens_level):
     plt.ylabel("Accuracy")
     plt.grid(True)
 
-    # Save the plot
-    plt.savefig(IMG_PATH + "fog_density_accuracy.png")
+    if not FAST_DEBUG:
+        plt.savefig(IMG_PATH + "fog_density_accuracy.png")
+
     plt.close()
