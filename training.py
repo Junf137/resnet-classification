@@ -146,9 +146,11 @@ def evaluate_model_with_fog_density(model, test_loader, device, dens_level):
 
             max_fog_lv = test_loader.dataset.dataset.max_fog_lv
             for fog_lv, pred, label in zip(fog_lvs, predicted, labels):
-                density_index = min(
-                    fog_lv * dens_level // max_fog_lv,
-                    dens_level - 1,
+                density_index = torch.tensor(
+                    min(
+                        fog_lv * dens_level // max_fog_lv,
+                        dens_level - 1,
+                    )
                 )
                 density_total[density_index.item()] += 1
                 density_correct[density_index.item()] += 1 if pred == label else 0
